@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MWFC Macro Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202124;
+      --muted: #667085;
+      --line: #d9e0e8;
+      --soft: #f4f7f8;
+      --panel: #ffffff;
+      --teal: #0f766e;
+      --teal-dark: #115e59;
+      --gold: #9a6700;
+      --red: #b42318;
+      --blue: #1d4ed8;
+      --shadow: 0 10px 30px rgba(32, 33, 36, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #eef3f1;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      min-height: 38px;
+    }
+
+    button:hover { border-color: #aebbc8; }
+    button:disabled { cursor: not-allowed; opacity: .55; }
+
+    .primary {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: white;
+    }
+
+    .primary:hover {
+      border-color: var(--teal-dark);
+      background: var(--teal-dark);
+    }
+
+    .danger {
+      color: var(--red);
+      border-color: #f4b4ae;
+      background: #fff7f6;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      padding: 14px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.1rem, 2vw, 1.45rem);
+      letter-spacing: 0;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: .9rem;
+      margin-top: 3px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(330px, 430px) 1fr;
+      gap: 18px;
+      padding: 18px;
+      min-height: 0;
+    }
+
+    aside, main {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-height: 0;
+    }
+
+    aside {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      overflow: hidden;
+    }
+
+    .filters {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 140px;
+      gap: 8px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      min-height: 38px;
+    }
+
+    textarea {
+      resize: vertical;
+      line-height: 1.42;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      background: #f8faf9;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.05rem;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: .78rem;
+      white-space: nowrap;
+    }
+
+    .list {
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .row {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+      background: #fff;
+    }
+
+    .row:hover, .row.active {
+      background: #eef8f6;
+    }
+
+    .row-title {
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: .76rem;
+      color: #344054;
+      background: #fff;
+      line-height: 1.15;
+    }
+
+    .badge.update { color: var(--blue); border-color: #bfdbfe; background: #eff6ff; }
+    .badge.archive { color: var(--red); border-color: #fecaca; background: #fff1f2; }
+    .badge.keep { color: var(--teal); border-color: #99f6e4; background: #f0fdfa; }
+    .badge.new { color: var(--gold); border-color: #fde68a; background: #fffbeb; }
+    .badge.pending { color: #6941c6; border-color: #ddd6fe; background: #f5f3ff; }
+
+    main {
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .empty {
+      min-height: 340px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .detail {
+      display: grid;
+      gap: 16px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .detail-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2vw, 1.85rem);
+      letter-spacing: 0;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .status {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      min-height: 64px;
+    }
+
+    .status span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+      margin-bottom: 4px;
+    }
+
+    .status strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .section h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .readonly {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #f8faf9;
+      padding: 11px;
+      min-height: 160px;
+      white-space: pre-wrap;
+      line-height: 1.42;
+      overflow: auto;
+    }
+
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: 700;
+      font-size: .86rem;
+    }
+
+    label span {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: #344054;
+    }
+
+    .check input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px;
+      accent-color: var(--teal);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .notice {
+      border: 1px solid #f8d98e;
+      background: #fff8e6;
+      color: #664d03;
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: none;
+    }
+
+    .notice.show { display: block; }
+
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      width: min(680px, calc(100vw - 24px));
+      padding: 0;
+    }
+
+    dialog::backdrop {
+      background: rgba(16, 24, 40, .32);
+    }
+
+    .dialog-body {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--line);
+      padding: 12px 18px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 900px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        max-height: 54vh;
+      }
+
+      .compare, .status-grid, .edit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Macro Review</h1>
+        <div class="subtle" id="sourceStatus">Loading published sheet...</div>
+      </div>
+      <div class="toolbar">
+        <button id="reloadButton" type="button" title="Reload from the published spreadsheet">Reload</button>
+        <button id="downloadButton" type="button" title="Download a spreadsheet-friendly CSV copy">Download CSV</button>
+        <button id="connectButton" type="button" title="Connect approval buttons to Google Sheets">Sheet Connection</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside>
+        <div class="filters">
+          <div class="filter-row">
+            <input id="searchInput" type="search" placeholder="Search macros">
+            <select id="decisionFilter" aria-label="Filter by decision">
+              <option value="all">All decisions</option>
+              <option value="Update">Update</option>
+              <option value="Archive">Archive</option>
+              <option value="Keep">Keep</option>
+              <option value="New">New</option>
+              <option value="blank">No decision</option>
+            </select>
+          </div>
+          <div class="filter-row">
+            <select id="usedFilter" aria-label="Filter by current use">
+              <option value="all">Used and unused</option>
+              <option value="TRUE">Currently used</option>
+              <option value="FALSE">Not currently used</option>
+            </select>
+            <select id="approvalFilter" aria-label="Filter by approval">
+              <option value="all">All approvals</option>
+              <option value="FALSE">Needs approval</option>
+              <option value="TRUE">Approved</option>
+            </select>
+          </div>
+        </div>
+        <div class="summary" id="summary"></div>
+        <div class="list" id="macroList"></div>
+      </aside>
+
+      <main>
+        <div class="empty" id="emptyState">
+          Select a macro to review.
+        </div>
+        <form class="detail" id="detailForm" hidden>
+          <div class="detail-top">
+            <div>
+              <h2 id="detailTitle"></h2>
+              <div class="subtle" id="detailSubtitle"></div>
+            </div>
+            <div class="badges" id="detailBadges"></div>
+          </div>
+
+          <div class="notice" id="saveNotice"></div>
+
+          <div class="status-grid">
+            <div class="status"><span>Bonnie recommendation</span><strong id="bonnieStatus"></strong></div>
+            <div class="status"><span>Currently used</span><strong id="usedStatus"></strong></div>
+            <div class="status"><span>Approved</span><strong id="approvedStatus"></strong></div>
+            <div class="status"><span>Update made</span><strong id="madeStatus"></strong></div>
+            <div class="status"><span>Last updated</span><strong id="dateStatus"></strong></div>
+          </div>
+
+          <div class="compare">
+            <section class="section">
+              <h3>Current macro</h3>
+              <div class="readonly" id="currentMacro"></div>
+            </section>
+            <section class="section">
+              <h3>Updated macro</h3>
+              <textarea id="updatedMacro" rows="12"></textarea>
+            </section>
+          </div>
+
+          <div class="edit-grid">
+            <label>
+              Updated name
+              <input id="updatedName" type="text">
+            </label>
+            <label>
+              Decision
+              <select id="decisionInput">
+                <option value=""></option>
+                <option value="Update">Update</option>
+                <option value="Archive">Archive</option>
+                <option value="Keep">Keep</option>
+                <option value="New">New</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="checks">
+            <label class="check"><input id="approvedInput" type="checkbox"> Update approved</label>
+            <label class="check"><input id="madeInput" type="checkbox"> Update made</label>
+          </div>
+
+          <div class="actions">
+            <button id="resetButton" type="button">Undo Local Changes</button>
+            <button id="saveButton" type="button">Save Locally</button>
+            <button class="primary" id="approveButton" type="button">Approve and Send</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="connectDialog">
+    <form method="dialog">
+      <div class="dialog-body">
+        <h2>Sheet Connection</h2>
+        <p class="small">
+          The published spreadsheet link can be read by this app, but it cannot receive edits by itself.
+          To make the approval button write back to Google Sheets, deploy the helper file named
+          google-sheets-web-app.gs from this folder as a Google Apps Script web app, then paste its web app URL here.
+        </p>
+        <label>
+          Google Apps Script web app URL
+          <input id="endpointInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+        </label>
+        <p class="small" id="connectionStatus"></p>
+      </div>
+      <div class="dialog-actions">
+        <button value="cancel">Close</button>
+        <button class="danger" id="clearEndpointButton" type="button">Clear</button>
+        <button class="primary" id="saveEndpointButton" type="button">Save Connection</button>
+      </div>
+    </form>
+  </dialog>
+
+  <form id="postForm" method="post" target="postFrame" hidden>
+    <input name="payload" id="postPayload">
+  </form>
+  <iframe name="postFrame" title="Sheet save response" hidden></iframe>
+
+  <script>
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwmqS_501hUCsunnaoQxksJI5ZeXHVMwlQpMQFh71cd8V6HhwiNOQckFJSCeyRoNhpElV61JVkodEm/pub?output=csv";
+    const STORAGE_KEY = "mwfcMacroReviewEdits";
+    const ENDPOINT_KEY = "mwfcMacroReviewEndpoint";
+    const HEADER_ROW = 2;
+
+    const columns = [
+      "Current Name",
+      "Current Macro",
+      "Decision",
+      "Updated Name",
+      "Updated Macro",
+      "Bonnie Recommended Update/Archive",
+      "Currently Used",
+      "Update Approved",
+      "Update Made",
+      "Date Updated"
+    ];
+
+    let sourceRows = [];
+    let rows = [];
+    let selectedId = null;
+    let localEdits = readJSON(STORAGE_KEY, {});
+
+    const els = {
+      sourceStatus: document.querySelector("#sourceStatus"),
+      reloadButton: document.querySelector("#reloadButton"),
+      downloadButton: document.querySelector("#downloadButton"),
+      connectButton: document.querySelector("#connectButton"),
+      searchInput: document.querySelector("#searchInput"),
+      decisionFilter: document.querySelector("#decisionFilter"),
+      usedFilter: document.querySelector("#usedFilter"),
+      approvalFilter: document.querySelector("#approvalFilter"),
+      summary: document.querySelector("#summary"),
+      macroList: document.querySelector("#macroList"),
+      emptyState: document.querySelector("#emptyState"),
+      detailForm: document.querySelector("#detailForm"),
+      detailTitle: document.querySelector("#detailTitle"),
+      detailSubtitle: document.querySelector("#detailSubtitle"),
+      detailBadges: document.querySelector("#detailBadges"),
+      saveNotice: document.querySelector("#saveNotice"),
+      bonnieStatus: document.querySelector("#bonnieStatus"),
+      usedStatus: document.querySelector("#usedStatus"),
+      approvedStatus: document.querySelector("#approvedStatus"),
+      madeStatus: document.querySelector("#madeStatus"),
+      dateStatus: document.querySelector("#dateStatus"),
+      currentMacro: document.querySelector("#currentMacro"),
+      updatedMacro: document.querySelector("#updatedMacro"),
+      updatedName: document.querySelector("#updatedName"),
+      decisionInput: document.querySelector("#decisionInput"),
+      approvedInput: document.querySelector("#approvedInput"),
+      madeInput: document.querySelector("#madeInput"),
+      resetButton: document.querySelector("#resetButton"),
+      saveButton: document.querySelector("#saveButton"),
+      approveButton: document.querySelector("#approveButton"),
+      connectDialog: document.querySelector("#connectDialog"),
+      endpointInput: document.querySelector("#endpointInput"),
+      connectionStatus: document.querySelector("#connectionStatus"),
+      saveEndpointButton: document.querySelector("#saveEndpointButton"),
+      clearEndpointButton: document.querySelector("#clearEndpointButton"),
+      postForm: document.querySelector("#postForm"),
+      postPayload: document.querySelector("#postPayload")
+    };
+
+    init();
+
+    function init() {
+      bindEvents();
+      loadSheet();
+    }
+
+    function bindEvents() {
+      els.reloadButton.addEventListener("click", loadSheet);
+      els.downloadButton.addEventListener("click", downloadCsv);
+      els.connectButton.addEventListener("click", openConnectionDialog);
+      els.searchInput.addEventListener("input", render);
+      els.decisionFilter.addEventListener("change", render);
+      els.usedFilter.addEventListener("change", render);
+      els.approvalFilter.addEventListener("change", render);
+      els.updatedMacro.addEventListener("input", captureForm);
+      els.updatedName.addEventListener("input", captureForm);
+      els.decisionInput.addEventListener("change", captureForm);
+      els.approvedInput.addEventListener("change", captureForm);
+      els.madeInput.addEventListener("change", captureForm);
+      els.saveButton.addEventListener("click", () => showNotice("Saved in this browser. Use Download CSV or Approve and Send when ready."));
+      els.resetButton.addEventListener("click", resetSelected);
+      els.approveButton.addEventListener("click", approveAndSend);
+      els.saveEndpointButton.addEventListener("click", saveEndpoint);
+      els.clearEndpointButton.addEventListener("click", clearEndpoint);
+    }
+
+    async function loadSheet() {
+      els.sourceStatus.textContent = "Loading published sheet...";
+      try {
+        const response = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error("Sheet could not be loaded.");
+        const text = await response.text();
+        const parsed = parseCSV(text);
+        sourceRows = parsed.slice(HEADER_ROW).filter(row => row.some(cell => cell.trim()));
+        rows = sourceRows.map((row, index) => {
+          const item = {};
+          columns.forEach((column, columnIndex) => item[column] = row[columnIndex] || "");
+          item.id = String(index + HEADER_ROW + 1);
+          item.sheetRow = index + HEADER_ROW + 1;
+          return applyEdit(item);
+        });
+        if (!selectedId && rows.length) selectedId = rows[0].id;
+        els.sourceStatus.textContent = `${rows.length} macros loaded from the published sheet.`;
+        render();
+      } catch (error) {
+        els.sourceStatus.textContent = "The sheet could not be loaded. Check the published link or internet connection.";
+        console.error(error);
+      }
+    }
+
+    function applyEdit(item) {
+      return { ...item, ...(localEdits[item.id] || {}) };
+    }
+
+    function render() {
+      renderSummary();
+      renderList();
+      renderDetail();
+    }
+
+    function getFilteredRows() {
+      const query = els.searchInput.value.trim().toLowerCase();
+      const decision = els.decisionFilter.value;
+      const used = els.usedFilter.value;
+      const approved = els.approvalFilter.value;
+      return rows.filter(row => {
+        const searchable = [
+          row["Current Name"],
+          row["Current Macro"],
+          row["Updated Name"],
+          row["Updated Macro"],
+          row["Decision"]
+        ].join(" ").toLowerCase();
+        if (query && !searchable.includes(query)) return false;
+        if (decision !== "all") {
+          if (decision === "blank" && row["Decision"]) return false;
+          if (decision !== "blank" && row["Decision"] !== decision) return false;
+        }
+        if (used !== "all" && truth(row["Currently Used"]) !== used) return false;
+        if (approved !== "all" && truth(row["Update Approved"]) !== approved) return false;
+        return true;
+      });
+    }
+
+    function renderSummary() {
+      const total = rows.length;
+      const approved = rows.filter(row => isTrue(row["Update Approved"])).length;
+      const needsApproval = total - approved;
+      const recommended = rows.filter(row => isTrue(row["Bonnie Recommended Update/Archive"])).length;
+      els.summary.innerHTML = [
+        metric(total, "Total"),
+        metric(needsApproval, "Needs approval"),
+        metric(approved, "Approved"),
+        metric(recommended, "Bonnie noted")
+      ].join("");
+    }
+
+    function metric(value, label) {
+      return `<div class="metric"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`;
+    }
+
+    function renderList() {
+      const filtered = getFilteredRows();
+      if (!filtered.some(row => row.id === selectedId) && filtered.length) selectedId = filtered[0].id;
+      els.macroList.innerHTML = filtered.map(row => `
+        <button class="row ${row.id === selectedId ? "active" : ""}" type="button" data-id="${escapeHtml(row.id)}">
+          <span class="row-title">${escapeHtml(row["Updated Name"] || row["Current Name"] || "Untitled macro")}</span>
+          <span class="badges">
+            ${badge(row["Decision"] || "No decision")}
+            ${isTrue(row["Currently Used"]) ? badge("Used") : ""}
+            ${isTrue(row["Bonnie Recommended Update/Archive"]) ? badge("Bonnie noted") : ""}
+            ${isTrue(row["Update Approved"]) ? badge("Approved") : badge("Pending")}
+          </span>
+        </button>
+      `).join("") || `<div class="empty">No macros match these filters.</div>`;
+      els.macroList.querySelectorAll(".row").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedId = button.dataset.id;
+          render();
+        });
+      });
+    }
+
+    function renderDetail() {
+      const row = rows.find(item => item.id === selectedId);
+      if (!row) {
+        els.emptyState.hidden = false;
+        els.detailForm.hidden = true;
+        return;
+      }
+      els.emptyState.hidden = true;
+      els.detailForm.hidden = false;
+      els.detailTitle.textContent = row["Updated Name"] || row["Current Name"] || "Untitled macro";
+      els.detailSubtitle.textContent = `Sheet row ${row.sheetRow}`;
+      els.detailBadges.innerHTML = [
+        badge(row["Decision"] || "No decision"),
+        isTrue(row["Currently Used"]) ? badge("Currently used") : badge("Not used"),
+        isTrue(row["Bonnie Recommended Update/Archive"]) ? badge("Bonnie recommended") : "",
+        isTrue(row["Update Approved"]) ? badge("Approved") : badge("Pending")
+      ].join("");
+      els.bonnieStatus.textContent = yesNo(row["Bonnie Recommended Update/Archive"]);
+      els.usedStatus.textContent = yesNo(row["Currently Used"]);
+      els.approvedStatus.textContent = yesNo(row["Update Approved"]);
+      els.madeStatus.textContent = yesNo(row["Update Made"]);
+      els.dateStatus.textContent = row["Date Updated"] || "Not updated";
+      els.currentMacro.textContent = row["Current Macro"] || "";
+      els.updatedMacro.value = row["Updated Macro"] || "";
+      els.updatedName.value = row["Updated Name"] || "";
+      els.decisionInput.value = row["Decision"] || "";
+      els.approvedInput.checked = isTrue(row["Update Approved"]);
+      els.madeInput.checked = isTrue(row["Update Made"]);
+      hideNotice();
+    }
+
+    function badge(value) {
+      const className = String(value).toLowerCase().replace(/\s+/g, "-");
+      const normalized = ["update", "archive", "keep", "new", "pending"].includes(className) ? className : "";
+      return `<span class="badge ${normalized}">${escapeHtml(value)}</span>`;
+    }
+
+    function captureForm() {
+      const row = rows.find(item => item.id === selectedId);
+      if (!row) return;
+      const edit = {
+        "Updated Macro": els.updatedMacro.value,
+        "Updated Name": els.updatedName.value,
+        "Decision": els.decisionInput.value,
+        "Update Approved": els.approvedInput.checked ? "TRUE" : "FALSE",
+        "Update Made": els.madeInput.checked ? "TRUE" : "FALSE"
+      };
+      localEdits[row.id] = edit;
+      Object.assign(row, edit);
+      writeJSON(STORAGE_KEY, localEdits);
+      renderSummary();
+      renderList();
+      renderStatusOnly(row);
+    }
+
+    function renderStatusOnly(row) {
+      els.approvedStatus.textContent = yesNo(row["Update Approved"]);
+      els.madeStatus.textContent = yesNo(row["Update Made"]);
+    }
+
+    function resetSelected() {
+      const source = sourceRows[Number(selectedId) - HEADER_ROW - 1];
+      if (!source) return;
+      delete localEdits[selectedId];
+      writeJSON(STORAGE_KEY, localEdits);
+      const rowIndex = rows.findIndex(item => item.id === selectedId);
+      const restored = {};
+      columns.forEach((column, columnIndex) => restored[column] = source[columnIndex] || "");
+      restored.id = selectedId;
+      restored.sheetRow = Number(selectedId);
+      rows[rowIndex] = restored;
+      render();
+      showNotice("Local changes for this macro were cleared.");
+    }
+
+    function approveAndSend() {
+      const row = rows.find(item => item.id === selectedId);
+      if (!row) return;
+      els.approvedInput.checked = true;
+      const today = new Date().toLocaleDateString("en-US");
+      const edit = {
+        "Updated Macro": els.updatedMacro.value,
+        "Updated Name": els.updatedName.value,
+        "Decision": els.decisionInput.value || row["Decision"],
+        "Update Approved": "TRUE",
+        "Update Made": els.madeInput.checked ? "TRUE" : "FALSE",
+        "Date Updated": today
+      };
+      localEdits[row.id] = edit;
+      Object.assign(row, edit);
+      writeJSON(STORAGE_KEY, localEdits);
+      render();
+
+      const endpoint = localStorage.getItem(ENDPOINT_KEY);
+      if (!endpoint) {
+        showNotice("Approved locally. Add a Sheet Connection when you want this button to write directly to Google Sheets.");
+        return;
+      }
+
+      const payload = {
+        updates: [{
+          row: row.sheetRow,
+          decision: row["Decision"],
+          updatedName: row["Updated Name"],
+          updatedMacro: row["Updated Macro"],
+          updateApproved: row["Update Approved"],
+          updateMade: row["Update Made"],
+          dateUpdated: row["Date Updated"]
+        }]
+      };
+      els.postForm.action = endpoint;
+      els.postPayload.value = JSON.stringify(payload);
+      els.postForm.submit();
+      showNotice("Sent to Google Sheets. Reload the published sheet in a minute if you want to confirm the public view has refreshed.");
+    }
+
+    function downloadCsv() {
+      const output = [
+        ["MWFC Macro Updates - May 2026"],
+        columns,
+        ...rows.map(row => columns.map(column => row[column] || ""))
+      ];
+      const blob = new Blob([toCSV(output)], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "mwfc-macro-updates-reviewed.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function openConnectionDialog() {
+      const endpoint = localStorage.getItem(ENDPOINT_KEY) || "";
+      els.endpointInput.value = endpoint;
+      els.connectionStatus.textContent = endpoint ? "Approval buttons are set to send to this URL." : "No write-back connection has been saved yet.";
+      els.connectDialog.showModal();
+    }
+
+    function saveEndpoint() {
+      const value = els.endpointInput.value.trim();
+      if (!value) return;
+      localStorage.setItem(ENDPOINT_KEY, value);
+      els.connectionStatus.textContent = "Connection saved.";
+      setTimeout(() => els.connectDialog.close(), 400);
+    }
+
+    function clearEndpoint() {
+      localStorage.removeItem(ENDPOINT_KEY);
+      els.endpointInput.value = "";
+      els.connectionStatus.textContent = "Connection cleared.";
+    }
+
+    function showNotice(message) {
+      els.saveNotice.textContent = message;
+      els.saveNotice.classList.add("show");
+    }
+
+    function hideNotice() {
+      els.saveNotice.classList.remove("show");
+      els.saveNotice.textContent = "";
+    }
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+        if (quoted) {
+          if (char === '"' && next === '"') {
+            field += '"';
+            i++;
+          } else if (char === '"') {
+            quoted = false;
+          } else {
+            field += char;
+          }
+        } else if (char === '"') {
+          quoted = true;
+        } else if (char === ",") {
+          row.push(field);
+          field = "";
+        } else if (char === "\n") {
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+        } else if (char !== "\r") {
+          field += char;
+        }
+      }
+      if (field || row.length) {
+        row.push(field);
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function toCSV(rowsToWrite) {
+      return rowsToWrite.map(row => row.map(cell => {
+        const text = String(cell ?? "");
+        return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+      }).join(",")).join("\r\n");
+    }
+
+    function isTrue(value) {
+      return String(value).trim().toUpperCase() === "TRUE";
+    }
+
+    function truth(value) {
+      return isTrue(value) ? "TRUE" : "FALSE";
+    }
+
+    function yesNo(value) {
+      return isTrue(value) ? "Yes" : "No";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function readJSON(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key)) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeJSON(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  </script>
+</body>
+</html>
