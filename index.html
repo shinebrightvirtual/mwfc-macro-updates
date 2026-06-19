@@ -496,7 +496,6 @@
       <div class="toolbar">
         <button id="reloadButton" type="button" title="Reload from the published spreadsheet">Reload</button>
         <button id="downloadButton" type="button" title="Download a spreadsheet-friendly CSV copy">Download CSV</button>
-        <button id="connectButton" type="button" title="Connect approval buttons to Google Sheets">Sheet Connection</button>
       </div>
     </header>
 
@@ -595,29 +594,6 @@
     </div>
   </div>
 
-  <dialog id="connectDialog">
-    <form method="dialog">
-      <div class="dialog-body">
-        <h2>Sheet Connection</h2>
-        <p class="small">
-          The published spreadsheet link can be read by this app, but it cannot receive edits by itself.
-          To make the approval button write back to Google Sheets, deploy the helper file named
-          google-sheets-web-app.gs from this folder as a Google Apps Script web app, then paste its web app URL here.
-        </p>
-        <label>
-          Google Apps Script web app URL
-          <input id="endpointInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
-        </label>
-        <p class="small" id="connectionStatus"></p>
-      </div>
-      <div class="dialog-actions">
-        <button value="cancel">Close</button>
-        <button class="danger" id="clearEndpointButton" type="button">Clear</button>
-        <button class="primary" id="saveEndpointButton" type="button">Save Connection</button>
-      </div>
-    </form>
-  </dialog>
-
   <form id="postForm" method="post" target="postFrame" hidden>
     <input name="payload" id="postPayload">
   </form>
@@ -627,7 +603,6 @@
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwmqS_501hUCsunnaoQxksJI5ZeXHVMwlQpMQFh71cd8V6HhwiNOQckFJSCeyRoNhpElV61JVkodEm/pub?output=csv";
     const DEFAULT_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxYn5DJmprZLAOFjt7XICpB04WGXBm_aOtwV6pBvPvPIzX6dJBigdgHjrWdLo-Fj-bc/exec";
     const STORAGE_KEY = "mwfcMacroReviewEdits";
-    const ENDPOINT_KEY = "mwfcMacroReviewEndpoint";
     const HEADER_ROW = 2;
 
     const columns = [
@@ -652,7 +627,6 @@
       sourceStatus: document.querySelector("#sourceStatus"),
       reloadButton: document.querySelector("#reloadButton"),
       downloadButton: document.querySelector("#downloadButton"),
-      connectButton: document.querySelector("#connectButton"),
       searchInput: document.querySelector("#searchInput"),
       decisionFilter: document.querySelector("#decisionFilter"),
       usedFilter: document.querySelector("#usedFilter"),
@@ -676,11 +650,6 @@
       approvedInput: document.querySelector("#approvedInput"),
       madeInput: document.querySelector("#madeInput"),
       approveButton: document.querySelector("#approveButton"),
-      connectDialog: document.querySelector("#connectDialog"),
-      endpointInput: document.querySelector("#endpointInput"),
-      connectionStatus: document.querySelector("#connectionStatus"),
-      saveEndpointButton: document.querySelector("#saveEndpointButton"),
-      clearEndpointButton: document.querySelector("#clearEndpointButton"),
       postForm: document.querySelector("#postForm"),
       postPayload: document.querySelector("#postPayload")
     };
@@ -695,7 +664,6 @@
     function bindEvents() {
       els.reloadButton.addEventListener("click", loadSheet);
       els.downloadButton.addEventListener("click", downloadCsv);
-      els.connectButton.addEventListener("click", openConnectionDialog);
       els.searchInput.addEventListener("input", render);
       els.decisionFilter.addEventListener("change", render);
       els.usedFilter.addEventListener("change", render);
@@ -706,8 +674,6 @@
       els.approvedInput.addEventListener("change", captureForm);
       els.madeInput.addEventListener("change", captureForm);
       els.approveButton.addEventListener("click", approveAndSend);
-      els.saveEndpointButton.addEventListener("click", saveEndpoint);
-      els.clearEndpointButton.addEventListener("click", clearEndpoint);
     }
 
     async function loadSheet() {
@@ -898,12 +864,6 @@
       writeJSON(STORAGE_KEY, localEdits);
       render();
 
-      const endpoint = getSheetEndpoint();
-      if (!endpoint) {
-        showNotice("Approved locally. Add a Sheet Connection when you want this button to write directly to Google Sheets.");
-        return;
-      }
-
       const payload = {
         updates: [{
           row: row.sheetRow,
@@ -915,10 +875,10 @@
           dateUpdated: row["Date Updated"]
         }]
       };
-      els.postForm.action = endpoint;
+      els.postForm.action = DEFAULT_SHEET_ENDPOINT;
       els.postPayload.value = JSON.stringify(payload);
       els.postForm.submit();
-      showNotice("Sent to Google Sheets. Reload the published sheet in a minute if you want to confirm the public view has refreshed.");
+      showNotice("Approved and sent to Google Sheets. The published view may take a minute to refresh.");
     }
 
     function downloadCsv() {
@@ -934,34 +894,6 @@
       link.download = "mwfc-macro-updates-reviewed.csv";
       link.click();
       URL.revokeObjectURL(url);
-    }
-
-    function openConnectionDialog() {
-      const savedEndpoint = localStorage.getItem(ENDPOINT_KEY) || "";
-      const endpoint = savedEndpoint || DEFAULT_SHEET_ENDPOINT;
-      els.endpointInput.value = endpoint;
-      els.connectionStatus.textContent = savedEndpoint
-        ? "Approval buttons are using your saved connection."
-        : "Approval buttons are using the built-in sheet connection.";
-      els.connectDialog.showModal();
-    }
-
-    function saveEndpoint() {
-      const value = els.endpointInput.value.trim();
-      if (!value) return;
-      localStorage.setItem(ENDPOINT_KEY, value);
-      els.connectionStatus.textContent = "Connection saved.";
-      setTimeout(() => els.connectDialog.close(), 400);
-    }
-
-    function clearEndpoint() {
-      localStorage.removeItem(ENDPOINT_KEY);
-      els.endpointInput.value = DEFAULT_SHEET_ENDPOINT;
-      els.connectionStatus.textContent = "Custom connection cleared. The built-in sheet connection will be used.";
-    }
-
-    function getSheetEndpoint() {
-      return localStorage.getItem(ENDPOINT_KEY) || DEFAULT_SHEET_ENDPOINT;
     }
 
     function showNotice(message) {

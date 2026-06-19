@@ -8,9 +8,9 @@ An HTML app for reviewing macro updates from the MWFC Google Sheet.
 - Shows search and filters for decision, current use, and approval status
 - Displays current macro text beside editable updated macro text
 - Shows Bonnie's recommendation and currently-used status
-- Lets reviewers approve updates locally
+- Lets reviewers approve updates
 - Exports an updated CSV
-- Sends approved updates back to Google Sheets through the connected Apps Script helper
+- Sends approved updates back to Google Sheets through the built-in Apps Script helper URL
 
 ## Files
 
@@ -32,4 +32,4 @@ If the Apps Script is redeployed later:
 3. Paste the contents of `google-sheets-web-app.gs`.
 4. Deploy it as a web app.
 5. Copy the web app URL.
-6. Open the review app, choose Sheet Connection, and paste that URL, or update `DEFAULT_SHEET_ENDPOINT` in `index.html`.
+6. Update `DEFAULT_SHEET_ENDPOINT` in `index.html`.
