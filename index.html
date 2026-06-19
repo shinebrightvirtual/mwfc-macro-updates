@@ -690,6 +690,9 @@
       const used = els.usedFilter.value;
       const approved = els.approvalFilter.value;
       return rows.filter(row => {
+        const hasUpdatedMacro = Boolean((row["Updated Macro"] || "").trim());
+        const shouldReview = row["Decision"] === "Keep" || hasUpdatedMacro;
+        if (!shouldReview) return false;
         const searchable = [
           row["Current Name"],
           row["Current Macro"],
