@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MWFC Macro Updates</title>
+  <style>
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #718096;
+      --accent: #4f46e5;
+      --accent-light: #ede9fe;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --orange: #ea580c;
+      --orange-light: #ffedd5;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --gray-light: #f1f5f9;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow);
+    }
+    header h1 { font-size: 1.125rem; font-weight: 700; letter-spacing: -.01em; }
+    header h1 span { color: var(--accent); }
+
+    #auth-area { display: flex; align-items: center; gap: 12px; }
+    #user-info { font-size: .875rem; color: var(--muted); }
+    .btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--gray-light); }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-success:hover { opacity: .9; }
+    .btn-success:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-sm { padding: 5px 12px; font-size: .8rem; }
+
+    /* ── Auth / Loading screens ── */
+    #login-screen, #loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      gap: 16px;
+      color: var(--muted);
+    }
+    #login-screen p, #loading-screen p { font-size: .95rem; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Filter pills */
+    .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill {
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .pill:hover { background: var(--gray-light); }
+    .pill.active { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+    .pill .count {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px;
+      background: currentColor;
+      color: var(--surface);
+      border-radius: 999px;
+      font-size: .7rem;
+      margin-left: 4px;
+      opacity: .85;
+    }
+    /* special pill colors */
+    .pill[data-filter="Update"].active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+    .pill[data-filter="Archive"].active { border-color: var(--red); background: var(--red-light); color: var(--red); }
+    .pill[data-filter="Keep"].active { border-color: var(--green); background: var(--green-light); color: var(--green); }
+    .pill[data-filter="New"].active { border-color: var(--orange); background: var(--orange-light); color: var(--orange); }
+
+    #search {
+      margin-left: auto;
+      padding: 7px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .875rem;
+      width: 220px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    #search:focus { border-color: var(--accent); }
+
+    #refresh-btn { margin-left: 0; }
+
+    /* ── Grid ── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 16px;
+      padding: 20px 24px;
+    }
+    #empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: box-shadow .2s;
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card.approved { border-color: var(--green); }
+    .card.archived { opacity: .7; }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-name {
+      font-size: .95rem;
+      font-weight: 700;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .card-row-num {
+      font-size: .7rem;
+      color: var(--muted);
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    /* Badges */
+    .badges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: .72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-update  { background: var(--blue-light);   color: var(--blue); }
+    .badge-archive { background: var(--red-light);    color: var(--red); }
+    .badge-keep    { background: var(--green-light);  color: var(--green); }
+    .badge-new     { background: var(--orange-light); color: var(--orange); }
+    .badge-blank   { background: var(--gray-light);   color: var(--muted); }
+    .badge-bonnie  { background: #fef3c7; color: #92400e; }
+    .badge-used    { background: var(--green-light); color: var(--green); }
+    .badge-approved { background: var(--green-light); color: var(--green); }
+
+    /* Macro text blocks */
+    .field-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .macro-block {
+      background: var(--gray-light);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: .82rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 140px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      transition: max-height .3s ease;
+    }
+    .macro-block.expanded { max-height: 600px; }
+    .macro-block.expanded .fade { display: none; }
+    .fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 36px;
+      background: linear-gradient(transparent, var(--gray-light));
+      border-radius: 0 0 8px 8px;
+    }
+    .expand-hint {
+      font-size: .72rem;
+      color: var(--accent);
+      cursor: pointer;
+      margin-top: 3px;
+      text-align: right;
+    }
+
+    /* Editable fields */
+    .field-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .15s;
+      background: var(--surface);
+    }
+    .field-input:focus { border-color: var(--accent); }
+    textarea.field-input {
+      resize: vertical;
+      min-height: 100px;
+      line-height: 1.6;
+    }
+    .field-input:disabled { background: var(--gray-light); color: var(--muted); cursor: not-allowed; }
+
+    /* Card footer */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+      border-top: 1px solid var(--border);
+    }
+    .date-info { font-size: .75rem; color: var(--muted); }
+    .card-actions { display: flex; gap: 8px; }
+
+    .save-indicator {
+      font-size: .75rem;
+      color: var(--green);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .save-indicator.show { opacity: 1; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 999;
+    }
+    .toast {
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: .875rem;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: var(--shadow-md);
+      animation: slideIn .25s ease;
+    }
+    .toast-success { background: var(--green); }
+    .toast-error   { background: var(--red); }
+    @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Config modal */
+    #config-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #config-modal.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 28px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 20px 40px rgba(0,0,0,.15);
+    }
+    .modal-box h2 { font-size: 1.1rem; margin-bottom: 8px; }
+    .modal-box p { font-size: .875rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label { display: block; font-size: .8rem; font-weight: 700; margin-bottom: 5px; }
+    .modal-field input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: .875rem;
+      outline: none;
+      font-family: monospace;
+    }
+    .modal-field input:focus { border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+
+    @media (max-width: 600px) {
+      #grid { grid-template-columns: 1fr; padding: 12px; }
+      #toolbar { padding: 12px; }
+      header { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>MWFC <span>Macro</span> Updates</h1>
+  <div id="auth-area">
+    <span id="user-info"></span>
+    <button class="btn btn-outline btn-sm" id="sign-out-btn" style="display:none" onclick="signOut()">Sign Out</button>
+    <button class="btn btn-outline btn-sm" id="settings-btn" onclick="openConfig()" title="Configure API">⚙ Settings</button>
+  </div>
+</header>
+
+<!-- Config modal -->
+<div id="config-modal">
+  <div class="modal-box">
+    <h2>Google Sheets Configuration</h2>
+    <p>Enter your Google OAuth Client ID and the Spreadsheet ID. These are saved locally in your browser and never sent anywhere.</p>
+    <div class="modal-field">
+      <label>OAuth Client ID</label>
+      <input id="cfg-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" />
+    </div>
+    <div class="modal-field">
+      <label>Spreadsheet ID</label>
+      <input id="cfg-sheet-id" type="text" placeholder="1Qyv2sr0yOSccNis_OLMEztH3KBl1O73pkw1S6F5-yeo" />
+    </div>
+    <div class="modal-field">
+      <label>Sheet Tab Name</label>
+      <input id="cfg-sheet-name" type="text" placeholder="Sheet1" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveConfig()">Save &amp; Sign In</button>
+      <button class="btn btn-outline" onclick="closeConfig()">Cancel</button>
+    </div>
+    <p style="margin-top:14px; font-size:.78rem;">
+      Need setup help? See the <a href="SETUP.md" target="_blank" style="color:var(--accent)">SETUP.md</a> guide in this repo.
+    </p>
+  </div>
+</div>
+
+<!-- Main content -->
+<div id="login-screen">
+  <div style="font-size:2rem">📋</div>
+  <p>Sign in with Google to load your macro spreadsheet.</p>
+  <button class="btn btn-primary" onclick="openConfig()">Get Started</button>
+</div>
+
+<div id="loading-screen" style="display:none">
+  <div class="spinner"></div>
+  <p>Loading macros…</p>
+</div>
+
+<div id="app" style="display:none">
+  <div id="toolbar">
+    <div class="filter-pills" id="filter-pills">
+      <button class="pill active" data-filter="All">All <span class="count" id="count-All">0</span></button>
+      <button class="pill" data-filter="Update">Update <span class="count" id="count-Update">0</span></button>
+      <button class="pill" data-filter="Archive">Archive <span class="count" id="count-Archive">0</span></button>
+      <button class="pill" data-filter="Keep">Keep <span class="count" id="count-Keep">0</span></button>
+      <button class="pill" data-filter="New">New <span class="count" id="count-New">0</span></button>
+      <button class="pill" data-filter="Approved">✓ Approved <span class="count" id="count-Approved">0</span></button>
+    </div>
+    <input type="search" id="search" placeholder="Search macros…" oninput="renderGrid()" />
+    <button class="btn btn-outline btn-sm" id="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+  <div id="grid"></div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const CFG_KEYS = { clientId: 'mwfc_client_id', sheetId: 'mwfc_sheet_id', sheetName: 'mwfc_sheet_name' };
+const DEFAULT_SHEET_ID = '1Qyv2sr0yOSccNis_OLMEztH3KBl1O73pkw1S6F5-yeo';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+
+// Column indices (0-based) matching the sheet
+const COL = {
+  currentName: 0,
+  currentMacro: 1,
+  decision: 2,
+  updatedName: 3,
+  updatedMacro: 4,
+  bonnie: 5,
+  currentlyUsed: 6,
+  updateApproved: 7,
+  updateMade: 8,
+  dateUpdated: 9,
+};
+
+let tokenClient = null;
+let accessToken = null;
+let allRows = [];
+let activeFilter = 'All';
+
+// ── Config modal ─────────────────────────────────────────────────────────────
+function openConfig() {
+  document.getElementById('cfg-client-id').value = localStorage.getItem(CFG_KEYS.clientId) || '';
+  document.getElementById('cfg-sheet-id').value = localStorage.getItem(CFG_KEYS.sheetId) || DEFAULT_SHEET_ID;
+  document.getElementById('cfg-sheet-name').value = localStorage.getItem(CFG_KEYS.sheetName) || 'Sheet1';
+  document.getElementById('config-modal').classList.add('open');
+}
+function closeConfig() {
+  document.getElementById('config-modal').classList.remove('open');
+}
+function saveConfig() {
+  const clientId = document.getElementById('cfg-client-id').value.trim();
+  const sheetId = document.getElementById('cfg-sheet-id').value.trim() || DEFAULT_SHEET_ID;
+  const sheetName = document.getElementById('cfg-sheet-name').value.trim() || 'Sheet1';
+  if (!clientId) { toast('Please enter your OAuth Client ID', 'error'); return; }
+  localStorage.setItem(CFG_KEYS.clientId, clientId);
+  localStorage.setItem(CFG_KEYS.sheetId, sheetId);
+  localStorage.setItem(CFG_KEYS.sheetName, sheetName);
+  closeConfig();
+  initAuth();
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+function initAuth() {
+  const clientId = localStorage.getItem(CFG_KEYS.clientId);
+  if (!clientId) return;
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) { toast('Auth error: ' + resp.error, 'error'); return; }
+      accessToken = resp.access_token;
+      document.getElementById('sign-out-btn').style.display = '';
+      loadData();
+    },
+  });
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function signOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = null;
+  allRows = [];
+  document.getElementById('sign-out-btn').style.display = 'none';
+  document.getElementById('user-info').textContent = '';
+  show('login-screen');
+}
+
+// ── Data loading ─────────────────────────────────────────────────────────────
+async function loadData() {
+  show('loading-screen');
+  const sheetId = localStorage.getItem(CFG_KEYS.sheetId) || DEFAULT_SHEET_ID;
+  const sheetName = localStorage.getItem(CFG_KEYS.sheetName) || 'Sheet1';
+  const range = encodeURIComponent(`${sheetName}!A:J`);
+  try {
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const rows = data.values || [];
+    // Row 0 is the header
+    allRows = rows.slice(1).map((row, i) => ({
+      rowIndex: i + 2, // 1-based sheet row (header is row 1)
+      currentName:    row[COL.currentName]    || '',
+      currentMacro:   row[COL.currentMacro]   || '',
+      decision:       row[COL.decision]        || '',
+      updatedName:    row[COL.updatedName]     || '',
+      updatedMacro:   row[COL.updatedMacro]    || '',
+      bonnie:         (row[COL.bonnie]         || '').toUpperCase() === 'TRUE',
+      currentlyUsed:  (row[COL.currentlyUsed]  || '').toUpperCase() === 'TRUE',
+      updateApproved: (row[COL.updateApproved] || '').toUpperCase() === 'TRUE',
+      updateMade:     (row[COL.updateMade]     || '').toUpperCase() === 'TRUE',
+      dateUpdated:    row[COL.dateUpdated]     || '',
+    })).filter(r => r.currentName || r.currentMacro); // skip fully empty rows
+
+    show('app');
+    updateCounts();
+    renderGrid();
+    toast(`Loaded ${allRows.length} macros`, 'success');
+  } catch (e) {
+    toast('Failed to load: ' + e.message, 'error');
+    show('login-screen');
+    console.error(e);
+  }
+}
+
+// ── Counts & filter ──────────────────────────────────────────────────────────
+function updateCounts() {
+  const counts = { All: allRows.length, Update: 0, Archive: 0, Keep: 0, New: 0, Approved: 0 };
+  allRows.forEach(r => {
+    if (r.decision in counts) counts[r.decision]++;
+    if (r.updateApproved) counts.Approved++;
+  });
+  Object.keys(counts).forEach(k => {
+    const el = document.getElementById('count-' + k);
+    if (el) el.textContent = counts[k];
+  });
+  document.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === activeFilter);
+  });
+}
+
+document.getElementById('filter-pills').addEventListener('click', e => {
+  const pill = e.target.closest('.pill');
+  if (!pill) return;
+  activeFilter = pill.dataset.filter;
+  updateCounts();
+  renderGrid();
+});
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderGrid() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = allRows.filter(r => {
+    const matchFilter =
+      activeFilter === 'All' ||
+      (activeFilter === 'Approved' ? r.updateApproved : r.decision === activeFilter);
+    const matchSearch = !query ||
+      r.currentName.toLowerCase().includes(query) ||
+      r.updatedName.toLowerCase().includes(query) ||
+      r.currentMacro.toLowerCase().includes(query) ||
+      r.updatedMacro.toLowerCase().includes(query);
+    return matchFilter && matchSearch;
+  });
+
+  const grid = document.getElementById('grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div id="empty-state">No macros match your current filter.</div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(r => cardHTML(r)).join('');
+}
+
+function decisionBadge(d) {
+  const map = {
+    Update:  ['badge-update',  '↑ Update'],
+    Archive: ['badge-archive', '✕ Archive'],
+    Keep:    ['badge-keep',    '✓ Keep'],
+    New:     ['badge-new',     '✦ New'],
+  };
+  const [cls, label] = map[d] || ['badge-blank', d || 'No Decision'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function cardHTML(r) {
+  const isArchive = r.decision === 'Archive';
+  const editDisabled = r.updateApproved ? 'disabled' : '';
+  return `
+<div class="card ${r.updateApproved ? 'approved' : ''} ${isArchive ? 'archived' : ''}" data-row="${r.rowIndex}">
+  <div class="card-header">
+    <div>
+      <div class="card-name">${esc(r.currentName)}</div>
+      <div class="card-row-num">Row ${r.rowIndex}</div>
+    </div>
+  </div>
+
+  <div class="badges">
+    ${decisionBadge(r.decision)}
+    ${r.bonnie        ? '<span class="badge badge-bonnie">⭐ Bonnie Recommends</span>' : ''}
+    ${r.currentlyUsed ? '<span class="badge badge-used">● Currently Used</span>' : ''}
+    ${r.updateApproved? '<span class="badge badge-approved">✓ Approved</span>' : ''}
+  </div>
+
+  <div>
+    <div class="field-label">Current Macro</div>
+    <div class="macro-block" onclick="toggleExpand(this)">
+      ${esc(r.currentMacro)}<div class="fade"></div>
+    </div>
+    <div class="expand-hint" onclick="toggleExpand(this.previousElementSibling)">Show more ▾</div>
+  </div>
+
+  ${r.decision !== 'Keep' && r.decision !== 'Archive' ? `
+  <div>
+    <div class="field-label">Updated Name</div>
+    <input class="field-input" type="text" ${editDisabled}
+      value="${esc(r.updatedName)}"
+      placeholder="Updated macro name…"
+      data-field="updatedName" data-row="${r.rowIndex}" />
+  </div>
+  <div>
+    <div class="field-label">Updated Macro</div>
+    <textarea class="field-input" ${editDisabled}
+      placeholder="Updated macro text…"
+      data-field="updatedMacro" data-row="${r.rowIndex}">${esc(r.updatedMacro)}</textarea>
+  </div>
+  ` : ''}
+
+  <div class="card-footer">
+    <div class="date-info">
+      ${r.dateUpdated ? `Last updated: ${r.dateUpdated}` : '<span style="color:var(--muted)">Not yet updated</span>'}
+    </div>
+    <div class="card-actions">
+      <span class="save-indicator" id="saved-${r.rowIndex}">Saved ✓</span>
+      ${r.decision !== 'Keep' && r.decision !== 'Archive' ? `
+        <button class="btn btn-outline btn-sm" onclick="saveEdits(${r.rowIndex})" ${r.updateApproved ? 'disabled' : ''}>
+          Save Edits
+        </button>
+        <button class="btn btn-success btn-sm" onclick="approveUpdate(${r.rowIndex})" ${r.updateApproved ? 'disabled' : ''}>
+          ${r.updateApproved ? '✓ Approved' : 'Approve'}
+        </button>
+      ` : ''}
+    </div>
+  </div>
+</div>`;
+}
+
+function toggleExpand(el) {
+  if (!el.classList.contains('macro-block')) return;
+  el.classList.toggle('expanded');
+  const hint = el.nextElementSibling;
+  if (hint) hint.textContent = el.classList.contains('expanded') ? 'Show less ▴' : 'Show more ▾';
+}
+
+// ── Writes ───────────────────────────────────────────────────────────────────
+async function saveEdits(rowIndex) {
+  const card = document.querySelector(`.card[data-row="${rowIndex}"]`);
+  const nameInput = card.querySelector('[data-field="updatedName"]');
+  const macroInput = card.querySelector('[data-field="updatedMacro"]');
+  if (!nameInput && !macroInput) return;
+
+  const updatedName  = nameInput  ? nameInput.value  : null;
+  const updatedMacro = macroInput ? macroInput.value  : null;
+
+  const sheetId   = localStorage.getItem(CFG_KEYS.sheetId)   || DEFAULT_SHEET_ID;
+  const sheetName = localStorage.getItem(CFG_KEYS.sheetName)  || 'Sheet1';
+
+  // Build batch update for columns D (updatedName) and E (updatedMacro)
+  const data = [];
+  if (updatedName  !== null) data.push({ range: `${sheetName}!D${rowIndex}`, values: [[updatedName]]  });
+  if (updatedMacro !== null) data.push({ range: `${sheetName}!E${rowIndex}`, values: [[updatedMacro]] });
+
+  try {
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ valueInputOption: 'USER_ENTERED', data }),
+      }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Update local data
+    const row = allRows.find(r => r.rowIndex === rowIndex);
+    if (row) {
+      if (updatedName  !== null) row.updatedName  = updatedName;
+      if (updatedMacro !== null) row.updatedMacro = updatedMacro;
+    }
+
+    const indicator = document.getElementById('saved-' + rowIndex);
+    if (indicator) { indicator.classList.add('show'); setTimeout(() => indicator.classList.remove('show'), 2500); }
+    toast('Saved!', 'success');
+  } catch (e) {
+    toast('Save failed: ' + e.message, 'error');
+  }
+}
+
+async function approveUpdate(rowIndex) {
+  if (!confirm('Mark this macro update as approved? This will write to the spreadsheet.')) return;
+
+  const sheetId   = localStorage.getItem(CFG_KEYS.sheetId)   || DEFAULT_SHEET_ID;
+  const sheetName = localStorage.getItem(CFG_KEYS.sheetName)  || 'Sheet1';
+  const today = new Date().toLocaleDateString('en-US');
+
+  // First save any pending edits
+  await saveEdits(rowIndex);
+
+  try {
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values:batchUpdate`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          valueInputOption: 'USER_ENTERED',
+          data: [
+            { range: `${sheetName}!H${rowIndex}`, values: [['TRUE']]  },  // Update Approved
+            { range: `${sheetName}!J${rowIndex}`, values: [[today]]   },  // Date Updated
+          ],
+        }),
+      }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const row = allRows.find(r => r.rowIndex === rowIndex);
+    if (row) { row.updateApproved = true; row.dateUpdated = today; }
+    updateCounts();
+    renderGrid();
+    toast('Update approved! ✓', 'success');
+  } catch (e) {
+    toast('Approve failed: ' + e.message, 'error');
+  }
+}
+
+// ── Utilities ────────────────────────────────────────────────────────────────
+function show(id) {
+  ['login-screen','loading-screen','app'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? (s === 'app' ? 'block' : 'flex') : 'none';
+  });
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const clientId = localStorage.getItem(CFG_KEYS.clientId);
+  if (clientId) {
+    // Wait for GSI to load then init
+    const tryInit = () => {
+      if (window.google?.accounts?.oauth2) initAuth();
+      else setTimeout(tryInit, 200);
+    };
+    tryInit();
+  }
+});
+</script>
+</body>
+</html>
